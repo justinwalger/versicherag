@@ -8,6 +8,11 @@ Handbook: Master the art of engineering large language models from concept to pr
 Unofficial demo project - not affiliated with or approved by R+V Versicherung. See the
 in-app disclaimer.
 
+**Live demo:** [https://streamlit-frontend-26307627592.europe-west1.run.app](https://streamlit-frontend-26307627592.europe-west1.run.app)
+(password on request - see the contact in the in-app disclaimer).
+
+![Chat UI demo: logging in, asking "Welche Haftpflichtversicherungen bietet ihr an?", the tool call it triggers, and the grounded, structured answer streaming in with citations](docs/demo.gif)
+
 ## Status
 
 Ingestion pipeline, metadata filtering, judge pass, chat UI with citations, shared-password

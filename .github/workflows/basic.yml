@@ -35,5 +35,5 @@ jobs:
         run: uv run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
 
   # The DeepEval suite (evals/) hits a live Qdrant index and makes real Gemini
-  # calls - there's no Qdrant available in CI, so it isn't run here. Run it
-  # locally on demand instead: pytest evals/test_agent.py -v
+  # calls, so it isn't run on every commit here. Trigger it manually via the
+  # "DeepEval Suite (manual)" workflow, or locally: pytest evals/test_agent.py -v

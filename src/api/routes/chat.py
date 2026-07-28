@@ -2,13 +2,22 @@
 
 import json
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
 
+from src.api.dependencies import verify_password
 from src.api.schemas.chat import ChatRequest
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verify_password)])
+
+
+@router.get("/auth/check")
+async def check_password() -> dict[str, bool]:
+    """Cheap endpoint the UI calls to validate a password right after entry,
+    without running the full chat pipeline. 401s via the router's dependency
+    if the password is wrong or missing."""
+    return {"ok": True}
 
 
 @router.post("/chat")

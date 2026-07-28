@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     gemini_judge_model: str = "gemini-3.5-flash-lite"
     qdrant_host: str
     qdrant_api_key: str
+    app_password: str
     qdrant_port: int = 6333
     qdrant_collection_name: str = "versicherungsassist_collection"
     qdrant_vector_size: int = 3072

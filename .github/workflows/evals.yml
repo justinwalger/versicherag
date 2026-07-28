@@ -1,0 +1,36 @@
+name: DeepEval Suite (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      marker:
+        description: "Optional pytest -m marker to run just one category (e.g. tool_call, correctness). Leave empty to run all."
+        required: false
+        default: ""
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Run DeepEval suite
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          QDRANT_HOST: ${{ secrets.QDRANT_HOST }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          if [ -n "${{ github.event.inputs.marker }}" ]; then
+            uv run pytest evals/test_agent.py -v -m "${{ github.event.inputs.marker }}"
+          else
+            uv run pytest evals/test_agent.py -v
+          fi

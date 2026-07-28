@@ -74,6 +74,15 @@ resource "google_project_iam_member" "ci_deployer_sa_user" {
   member  = "serviceAccount:${google_service_account.ci_deployer.email}"
 }
 
+# The deploy workflow's `terraform init -backend-config="bucket=..."` runs as this
+# SA and needs to list/read/write/lock objects in the state bucket - scoped to just
+# this bucket, not project-wide storage access.
+resource "google_storage_bucket_iam_member" "ci_deployer_state_access" {
+  bucket = var.state_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.ci_deployer.email}"
+}
+
 resource "google_service_account_key" "ci_deployer_key" {
   service_account_id = google_service_account.ci_deployer.name
 }

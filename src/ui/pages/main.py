@@ -13,9 +13,44 @@ def handle_suggestion_change() -> None:
     st.session_state.pending_suggestion = st.session_state.selected_suggestion
 
 
+def _prompt_for_password() -> str | None:
+    """Ask for the shared password once per session; returns None until entered."""
+    if st.session_state.get("api_password"):
+        return st.session_state.api_password
+
+    st.title("VersicherungsAssist", anchor=False)
+    password = st.text_input("Passwort", type="password", key="password_input")
+    if st.button("Anmelden") and password:
+        match _connector.check_password(password):
+            case True:
+                st.session_state.api_password = password
+                st.rerun()
+            case False:
+                st.error("Falsches Passwort.")
+            case None:
+                st.error("Server nicht erreichbar.")
+    return None
+
+
+def _ask_and_render(question: str, password: str) -> None:
+    write_human_message(question)
+    llm_generator = _connector.ask_backend(
+        message=question,
+        thread_id=st.session_state.thread_id,
+        password=password,
+    )
+    if write_ai_response(llm_generator):
+        st.session_state.api_password = None
+        st.rerun()
+
+
 def create_main_page():
     """Create main page."""
     st.warning(DISCLAIMER)
+
+    password = _prompt_for_password()
+    if password is None:
+        return
 
     title_row = st.container(
         horizontal=True,
@@ -54,12 +89,7 @@ def create_main_page():
     if pending_suggestion:
         suggested_question = SUGGESTIONS[pending_suggestion]
         st.session_state.pending_suggestion = None
-        write_human_message(suggested_question)
-        llm_generator = _connector.ask_backend(
-            message=suggested_question,
-            thread_id=st.session_state.thread_id,
-        )
-        write_ai_response(llm_generator)
+        _ask_and_render(suggested_question, password)
 
     # footer
     with title_row:
@@ -75,9 +105,4 @@ def create_main_page():
 
     # Flow for human input
     if human_input := st.chat_input("Stelle eine Frage...", key="initial_question"):
-        write_human_message(human_input)
-        llm_generator = _connector.ask_backend(
-            message=human_input,
-            thread_id=st.session_state.thread_id,
-        )
-        write_ai_response(llm_generator)
+        _ask_and_render(human_input, password)

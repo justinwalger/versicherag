@@ -41,6 +41,10 @@ resource "google_cloud_run_v2_service" "fastapi_backend" {
         name  = "QDRANT_API_KEY"
         value = var.qdrant_api_key
       }
+      env {
+        name  = "APP_PASSWORD"
+        value = var.app_password
+      }
 
       ports {
         container_port = 8080

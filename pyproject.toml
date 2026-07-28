@@ -46,23 +46,6 @@ ui = [
     "streamlit>=1.59.1",
 ]
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-markers = [
-    "tool_call: agent must call the search tool",
-    "no_tool_call: agent must not call any tool",
-    "correctness: answer must state the retrieved fact accurately",
-    "citation: answer must include a concrete source citation",
-    "tone: answer must maintain an appropriate tone",
-    "out_of_scope: agent must decline instead of fabricating",
-]
-
-
-[tool.ty.rules]
-possibly-unresolved-reference = "warn"
-division-by-zero = "ignore"
-
-
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -97,7 +80,6 @@ exclude = [
 # Same as Black.
 line-length = 100
 indent-width = 4
-
 
 [tool.ruff.lint]
 # select = [...]  # See the Default Rules page for the full listing.
@@ -136,3 +118,18 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[tool.ty.rules]
+possibly-unresolved-reference = "warn"
+division-by-zero = "ignore"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+markers = [
+    "tool_call: agent must call the search tool",
+    "no_tool_call: agent must not call any tool",
+    "correctness: answer must state the retrieved fact accurately",
+    "citation: answer must include a concrete source citation",
+    "tone: answer must maintain an appropriate tone",
+    "out_of_scope: agent must decline instead of fabricating",
+]

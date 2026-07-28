@@ -30,7 +30,7 @@ jobs:
       - name: Build and Push FastAPI Backend
         run: |
           IMAGE_TAG=${{ env.REGISTRY }}/backend:${{ github.sha }}
-          docker build -t $IMAGE_TAG -f Dockerfile.api .
+          docker build -t $IMAGE_TAG -f docker/Dockerfile.api .
           docker push $IMAGE_TAG
 
   build-frontend:
@@ -51,7 +51,7 @@ jobs:
       - name: Build and Push Streamlit Frontend
         run: |
           IMAGE_TAG=${{ env.REGISTRY }}/frontend:${{ github.sha }}
-          docker build -t $IMAGE_TAG -f Dockerfile.streamlit .
+          docker build -t $IMAGE_TAG -f docker/Dockerfile.streamlit .
           docker push $IMAGE_TAG
 
   deploy:
@@ -78,6 +78,9 @@ jobs:
           TF_VAR_project_id: ${{ env.PROJECT_ID }}
           TF_VAR_backend_image: ${{ env.REGISTRY }}/backend:${{ github.sha }}
           TF_VAR_frontend_image: ${{ env.REGISTRY }}/frontend:${{ github.sha }}
+          TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          TF_VAR_qdrant_host: ${{ secrets.QDRANT_HOST }}
+          TF_VAR_qdrant_api_key: ${{ secrets.QDRANT_API_KEY }}
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="prefix=versicherag"
           terraform apply -auto-approve

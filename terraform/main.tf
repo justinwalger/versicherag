@@ -29,6 +29,19 @@ resource "google_cloud_run_v2_service" "fastapi_backend" {
     containers {
       image = var.backend_image
 
+      env {
+        name  = "GEMINI_API_KEY"
+        value = var.gemini_api_key
+      }
+      env {
+        name  = "QDRANT_HOST"
+        value = var.qdrant_host
+      }
+      env {
+        name  = "QDRANT_API_KEY"
+        value = var.qdrant_api_key
+      }
+
       ports {
         container_port = 8080
       }

@@ -45,17 +45,19 @@ class TestCap:
         assert all(p.metadata["chunk_count"] == len(pieces) for p in pieces)
 
     def test_same_header_in_different_products_gets_different_parent_id(self):
-
+        # Regression test: two bundled products in the same source PDF can
+        # share an identically-worded clause header - parent_id must be
+        # scoped by product, not just by source + header text.
         chunker = PDFChunker(max_chars=50, overlap=10)
         base_metadata = {"source": "x.pdf", "Header 1": "21. Beitragsregulierung"}
 
         doc_a = Document(
             page_content="a" * 200,
-            metadata={**base_metadata},
+            metadata={**base_metadata, "product_title": "Umweltschadensversicherung Gesamtmodell"},
         )
         doc_b = Document(
             page_content="b" * 200,
-            metadata={**base_metadata},
+            metadata={**base_metadata, "product_title": "Umweltschadensbasisversicherung"},
         )
 
         parent_id_a = chunker.cap(doc_a)[0].metadata["parent_id"]

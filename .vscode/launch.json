@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API: FastAPI Dev",
+      "type": "python",
+      "request": "launch",
+      "module": "fastapi",
+      "args": ["dev", "app.py"],
+      "cwd": "${workspaceFolder}/src/api",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "UI: Streamlit App",
+      "type": "python",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "app.py"],
+      "cwd": "${workspaceFolder}/src/ui",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

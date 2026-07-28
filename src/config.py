@@ -48,9 +48,27 @@ class Settings(BaseSettings):
         "https://www.ruv.de/dam/jcr:14f4d452-1ae5-455d-8692-2adbf8f8429b/PUR0122.PDF",
         "https://www.ruv.de/dam/jcr:28f8bae4-36c3-4d94-95f2-4ba5eef3c1cc/kapital-unfallversicherung-avb-0122.pdf",
     ]
-    backend_api_url: str = "http://127.0.0.1:8000/api"
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+class UISettings(BaseSettings):
+    """Settings for the Streamlit frontend only - deliberately separate from Settings so the
+    UI container never needs the backend's secrets (Gemini/Qdrant/APP_PASSWORD) just to start."""
+
+    model_config = SettingsConfigDict(
+        env_file=_ENV_FILE,
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    backend_api_url: str = "http://127.0.0.1:8000/api"
+
+
+@lru_cache
+def get_ui_settings() -> UISettings:
+    return UISettings()

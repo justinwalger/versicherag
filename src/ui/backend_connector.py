@@ -3,12 +3,12 @@ from collections.abc import Iterator
 
 import httpx
 
-from src.config import get_settings
+from src.config import get_ui_settings
 
 
 class BackendConnector:
     def __init__(self, api_url: str | None = None, timeout: float = 60.0) -> None:
-        self.api_url = api_url or get_settings().backend_api_url
+        self.api_url = api_url or get_ui_settings().backend_api_url
         self.timeout = timeout
 
     def check_password(self, password: str) -> bool | None:

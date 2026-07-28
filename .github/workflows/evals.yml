@@ -28,6 +28,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           QDRANT_HOST: ${{ secrets.QDRANT_HOST }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |
           if [ -n "${{ github.event.inputs.marker }}" ]; then
             uv run pytest evals/test_agent.py -v -m "${{ github.event.inputs.marker }}"

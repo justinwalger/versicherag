@@ -45,6 +45,22 @@ resource "google_cloud_run_v2_service" "fastapi_backend" {
         name  = "APP_PASSWORD"
         value = var.app_password
       }
+      env {
+        name  = "LANGSMITH_TRACING"
+        value = var.langsmith_tracing
+      }
+      env {
+        name  = "LANGSMITH_ENDPOINT"
+        value = var.langsmith_endpoint
+      }
+      env {
+        name  = "LANGSMITH_API_KEY"
+        value = var.langsmith_api_key
+      }
+      env {
+        name  = "LANGSMITH_PROJECT"
+        value = var.langsmith_project
+      }
 
       ports {
         container_port = 8080

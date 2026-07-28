@@ -29,3 +29,9 @@ variable "qdrant_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "app_password" {
+  description = "Shared password gating the /api/chat endpoint, for the FastAPI backend's Settings (required, no default)"
+  type        = string
+  sensitive   = true
+}

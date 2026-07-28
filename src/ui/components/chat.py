@@ -45,10 +45,12 @@ def _citation_key(metadata: dict) -> tuple:
     )
 
 
-def write_ai_response(events: Iterator[dict]) -> None:
+def write_ai_response(events: Iterator[dict]) -> bool:
     """Stream an AI response from backend events, append it to session state, and
     list the retrieved chunks (Document - Section - Paragraph) it was grounded in -
-    sourced directly from the search tool's results, not the model's own wording."""
+    sourced directly from the search tool's results, not the model's own wording.
+
+    Returns True if the backend rejected the request for a wrong/missing password."""
     avatar = AVATARS.get(Role.ai)
     with st.chat_message(Role.ai, avatar=avatar):
         tool_placeholder = st.empty()
@@ -61,6 +63,14 @@ def write_ai_response(events: Iterator[dict]) -> None:
         for event in events:
             event_type = event.get("type")
             content = event.get("content", "")
+
+            if event_type == "auth_error":
+                st.error(content or "Falsches Passwort.")
+                return True
+
+            if event_type == "connection_error":
+                st.error(content or "Server nicht erreichbar.")
+                return False
 
             if event_type == "tool":
                 tool_placeholder.info(content)
@@ -89,6 +99,8 @@ def write_ai_response(events: Iterator[dict]) -> None:
 
     if full_response:
         st.session_state.messages.append(Message(role=Role.ai, content=full_response))
+
+    return False
 
 
 def display_message(message: Message) -> None:

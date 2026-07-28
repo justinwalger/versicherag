@@ -35,3 +35,27 @@ variable "app_password" {
   type        = string
   sensitive   = true
 }
+
+variable "langsmith_api_key" {
+  description = "LangSmith API key for tracing the FastAPI backend's LangChain/LangGraph agent runs (required, no default)"
+  type        = string
+  sensitive   = true
+}
+
+variable "langsmith_project" {
+  description = "LangSmith project name traces are grouped under"
+  type        = string
+  default     = "versicherag"
+}
+
+variable "langsmith_endpoint" {
+  description = "LangSmith API endpoint"
+  type        = string
+  default     = "https://api.smith.langchain.com"
+}
+
+variable "langsmith_tracing" {
+  description = "\"true\" to enable LangSmith tracing, \"false\" to disable without removing the key"
+  type        = string
+  default     = "true"
+}

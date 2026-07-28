@@ -82,6 +82,10 @@ jobs:
           TF_VAR_qdrant_host: ${{ secrets.QDRANT_HOST }}
           TF_VAR_qdrant_api_key: ${{ secrets.QDRANT_API_KEY }}
           TF_VAR_app_password: ${{ secrets.APP_PASSWORD }}
+          TF_VAR_langsmith_api_key: ${{ secrets.LANGSMITH_API_KEY }}
+          TF_VAR_langsmith_tracing: ${{ secrets.LANGSMITH_TRACING }}
+          TF_VAR_langsmith_endpoint: ${{ secrets.LANGSMITH_ENDPOINT }}
+          TF_VAR_langsmith_project: ${{ secrets.LANGSMITH_PROJECT }}
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="prefix=versicherag"
           terraform apply -auto-approve

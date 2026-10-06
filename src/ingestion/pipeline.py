@@ -12,7 +12,6 @@ from src.ingestion.models import (
     NOT_INSURANCE_MARKER,
     ChunkedDocument,
     EnrichedFile,
-    LoadedFile,
     ParsedProduct,
 )
 from src.ingestion.steps.chunk import MIN_CHUNK_CHARS, PDFChunker, header_path
@@ -27,21 +26,24 @@ DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
 
 @step
-def load_step() -> list[LoadedFile]:
+def load_step() -> list[dict[str, str]]:
     """First step of the ingestion pipeline: download PDFs from the configured source URLs and return their filename and paths."""
     settings = get_settings()
     loader = WebsiteLoader(settings.source_urls)
     links = loader.retrieve_links()
     paths = loader.download_pdfs(links, DATA_DIR)
 
-    return [LoadedFile(filename=path.name, path=path) for path in paths]
+    # Keep the ZenML artifact boundary JSON-serializable. Passing Pydantic
+    # instances between steps can produce a different model instance during
+    # deserialization, which ZenML rejects during step input validation.
+    return [{"filename": path.name, "path": str(path)} for path in paths]
 
 
 @step
-def parse_step(pdf_files: list[LoadedFile]) -> list[ParsedProduct]:
+def parse_step(pdf_files: list[dict[str, str]]) -> list[ParsedProduct]:
     """Second step of the ingestion pipeline: parse each PDF and split it into its individual bundled products
     (a single PDF may contain multiple independently numbered policy documents)."""
-    return parse_many([str(f.path) for f in pdf_files])
+    return parse_many([file["path"] for file in pdf_files])
 
 
 @step

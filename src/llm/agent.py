@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 from langchain.agents import create_agent
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 from langchain_core.tools import BaseTool
@@ -24,6 +25,7 @@ class ChatAgent:
         system_prompt: str,
         checkpointer: BaseCheckpointSaver,
         judge: AnswerJudge,
+        tracing_handler: BaseCallbackHandler | None = None,
     ) -> None:
 
         self.agent = create_agent(
@@ -33,6 +35,7 @@ class ChatAgent:
             checkpointer=checkpointer,
         )
         self.judge = judge
+        self.tracing_handler = tracing_handler
 
     async def stream(
         self, messages: Sequence[BaseMessage], thread_id: str
@@ -54,7 +57,8 @@ class ChatAgent:
             config={
                 "configurable": {
                     "thread_id": thread_id,
-                }
+                },
+                "callbacks": [self.tracing_handler] if self.tracing_handler else [],
             },
         ):
             event_type = event.get("event")
@@ -164,7 +168,8 @@ class ChatAgent:
             config={
                 "configurable": {
                     "thread_id": thread_id,
-                }
+                },
+                "callbacks": [self.tracing_handler] if self.tracing_handler else [],
             },
         ):
             event_type = event.get("event")

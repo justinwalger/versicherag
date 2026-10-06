@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     qdrant_host: str
     qdrant_api_key: str
     app_password: str
+    langfuse_tracing: bool = False
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
     qdrant_port: int = 6333
     qdrant_collection_name: str = "versicherungsassist_collection"
     qdrant_vector_size: int = 3072

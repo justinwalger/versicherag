@@ -36,26 +36,27 @@ variable "app_password" {
   sensitive   = true
 }
 
-variable "langsmith_api_key" {
-  description = "LangSmith API key for tracing the FastAPI backend's LangChain/LangGraph agent runs (required, no default)"
+variable "langfuse_public_key" {
+  description = "Langfuse public key for tracing the FastAPI backend's LangChain/LangGraph agent runs"
+  type        = string
+  default     = ""
+}
+
+variable "langfuse_secret_key" {
+  description = "Langfuse secret key for tracing the FastAPI backend's LangChain/LangGraph agent runs"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
-variable "langsmith_project" {
-  description = "LangSmith project name traces are grouped under"
+variable "langfuse_base_url" {
+  description = "Langfuse API endpoint"
   type        = string
-  default     = "versicherag"
+  default     = "https://cloud.langfuse.com"
 }
 
-variable "langsmith_endpoint" {
-  description = "LangSmith API endpoint"
+variable "langfuse_tracing" {
+  description = "\"true\" to enable Langfuse tracing, \"false\" to disable without removing the keys"
   type        = string
-  default     = "https://api.smith.langchain.com"
-}
-
-variable "langsmith_tracing" {
-  description = "\"true\" to enable LangSmith tracing, \"false\" to disable without removing the key"
-  type        = string
-  default     = "true"
+  default     = "false"
 }

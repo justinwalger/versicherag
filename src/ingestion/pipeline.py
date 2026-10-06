@@ -12,7 +12,6 @@ from src.ingestion.models import (
     NOT_INSURANCE_MARKER,
     ChunkedDocument,
     EnrichedFile,
-    LoadedFile,
     ParsedProduct,
 )
 from src.ingestion.steps.chunk import MIN_CHUNK_CHARS, PDFChunker, header_path
@@ -27,25 +26,31 @@ DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
 
 @step
-def load_step() -> list[LoadedFile]:
+def load_step() -> list[dict[str, str]]:
     """First step of the ingestion pipeline: download PDFs from the configured source URLs and return their filename and paths."""
     settings = get_settings()
     loader = WebsiteLoader(settings.source_urls)
     links = loader.retrieve_links()
     paths = loader.download_pdfs(links, DATA_DIR)
 
-    return [LoadedFile(filename=path.name, path=path) for path in paths]
+    # Keep the ZenML artifact boundary JSON-serializable. Passing Pydantic
+    # instances between steps can produce a different model instance during
+    # deserialization, which ZenML rejects during step input validation.
+    return [{"filename": path.name, "path": str(path)} for path in paths]
 
 
 @step
-def parse_step(pdf_files: list[LoadedFile]) -> list[ParsedProduct]:
+def parse_step(pdf_files: list[dict[str, str]]) -> list[dict[str, object]]:
     """Second step of the ingestion pipeline: parse each PDF and split it into its individual bundled products
     (a single PDF may contain multiple independently numbered policy documents)."""
-    return parse_many([str(f.path) for f in pdf_files])
+    return [
+        product.model_dump(mode="json")
+        for product in parse_many([file["path"] for file in pdf_files])
+    ]
 
 
 @step
-def enrich_step(parsed_products: list[ParsedProduct]) -> list[EnrichedFile]:
+def enrich_step(parsed_products: list[dict[str, object]]) -> list[dict[str, object]]:
     """Third step of the ingestion pipeline: extract document metadata (provider, date, policy, category) for each
     product and skip products that are not insurance conditions."""
     settings = get_settings()
@@ -53,7 +58,8 @@ def enrich_step(parsed_products: list[ParsedProduct]) -> list[EnrichedFile]:
     enricher = Enricher(llm=client, model_name=settings.gemini_metadata_model)
 
     enriched_files = []
-    for p in parsed_products:
+    for raw_product in parsed_products:
+        p = ParsedProduct.model_validate(raw_product)
         document = enricher.enrich(p.markdown)
         if document.anbieter == NOT_INSURANCE_MARKER:
             logger.info(f"skipping {p.filename} ({p.product_title}): not insurance conditions.")
@@ -65,19 +71,20 @@ def enrich_step(parsed_products: list[ParsedProduct]) -> list[EnrichedFile]:
                 page_start=p.page_start,
                 page_end=p.page_end,
                 document=document,
-            )
+            ).model_dump(mode="json")
         )
     return enriched_files
 
 
 @step
-def chunk_step(enriched_docs: list[EnrichedFile]) -> list[ChunkedDocument]:
+def chunk_step(enriched_docs: list[dict[str, object]]) -> list[dict[str, object]]:
     """Fourth step of the ingestion pipeline: split each enriched product into chunks, clean them, and return a list of dicts containing the chunk text and metadata."""
     chunker = PDFChunker()
     cleaner = PDFCleaner()
 
-    chunks: list[ChunkedDocument] = []
-    for f in enriched_docs:
+    chunks: list[dict[str, object]] = []
+    for raw_doc in enriched_docs:
+        f = EnrichedFile.model_validate(raw_doc)
         for chunk in chunker.chunk(f.document.content, source=f.filename):
             chunk.metadata["anbieter"] = f.document.anbieter
             chunk.metadata["datum"] = f.document.datum
@@ -100,23 +107,25 @@ def chunk_step(enriched_docs: list[EnrichedFile]) -> list[ChunkedDocument]:
             for piece in chunker.cap(cleaned):
                 enriched = chunker.enrich(piece)
                 chunks.append(
-                    ChunkedDocument(text=enriched.page_content, metadata=enriched.metadata)
+                    ChunkedDocument(
+                        text=enriched.page_content, metadata=enriched.metadata
+                    ).model_dump(mode="json")
                 )
     return chunks
 
 
 @step
-def embed_step(chunks: list[ChunkedDocument]) -> Embeddings:
+def embed_step(chunks: list[dict[str, object]]) -> Embeddings:
     """Fifth step of the ingestion pipeline: create embeddings for all chunks."""
     settings = get_settings()
     client = genai.Client(api_key=settings.gemini_api_key)
     embedder = Embedder(client=client, model_name=settings.gemini_embedding_model)
-    texts = [chunk.text for chunk in chunks]
+    texts = [str(chunk["text"]) for chunk in chunks]
     return embedder.embed_batch(texts)
 
 
 @step
-def index_step(chunks: list[ChunkedDocument], embeddings: Embeddings) -> None:
+def index_step(chunks: list[dict[str, object]], embeddings: Embeddings) -> None:
     """Sixth step of the ingestion pipeline: index chunks and their corresponding embeddings in Qdrant."""
     settings = get_settings()
     client = QdrantClient(
@@ -127,7 +136,7 @@ def index_step(chunks: list[ChunkedDocument], embeddings: Embeddings) -> None:
         collection_name=settings.qdrant_collection_name,
         vector_size=settings.qdrant_vector_size,
     )
-    indexer.index(chunks, embeddings)
+    indexer.index([ChunkedDocument.model_validate(chunk) for chunk in chunks], embeddings)
 
 
 @pipeline

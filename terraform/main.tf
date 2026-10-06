@@ -46,20 +46,20 @@ resource "google_cloud_run_v2_service" "fastapi_backend" {
         value = var.app_password
       }
       env {
-        name  = "LANGSMITH_TRACING"
-        value = var.langsmith_tracing
+        name  = "LANGFUSE_TRACING"
+        value = var.langfuse_tracing
       }
       env {
-        name  = "LANGSMITH_ENDPOINT"
-        value = var.langsmith_endpoint
+        name  = "LANGFUSE_BASE_URL"
+        value = var.langfuse_base_url
       }
       env {
-        name  = "LANGSMITH_API_KEY"
-        value = var.langsmith_api_key
+        name  = "LANGFUSE_PUBLIC_KEY"
+        value = var.langfuse_public_key
       }
       env {
-        name  = "LANGSMITH_PROJECT"
-        value = var.langsmith_project
+        name  = "LANGFUSE_SECRET_KEY"
+        value = var.langfuse_secret_key
       }
 
       ports {

@@ -139,8 +139,48 @@ uv sync --group ui
 uv run streamlit run src/ui/app.py
 
 # Ingestion pipeline (downloads PDFs, parses, embeds, indexes into Qdrant)
+# Terminal 1: start the local ZenML server and leave it running
 uv sync --group data
+uv run zenml login --local
+
+# Terminal 2: run the ingestion pipeline
 uv run python -m src.ingestion.pipeline
+```
+
+The ingestion pipeline uses ZenML and therefore requires the local ZenML server to be
+running first. The `data` dependency group installs ZenML with both the `local` and
+`server` extras required by `uv run zenml up`. If you see an error saying that the
+local daemon server provider is unavailable, run `uv sync --group data` again after
+updating the project dependencies. If you see an error connecting to
+`http://127.0.0.1:8237`, start the server with `uv run zenml login --local` and retry the
+pipeline in a second terminal. Check the connection with:
+
+```bash
+uv run zenml status
+```
+
+### Langfuse project settings
+
+Langfuse projects are selected through the API keys, not through a separate project
+environment variable. In the Langfuse dashboard, create or select the project you
+want to use (for example, `versicherag`), then create API keys from that project's
+**Settings → API Keys** page. Put those keys in `.env`:
+
+```env
+LANGFUSE_TRACING=true
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+```
+
+Do not commit `.env` or share `LANGFUSE_SECRET_KEY`. If keys were exposed, revoke
+them in Langfuse and create a new pair.
+
+If a stale or broken local server is already configured, restart it with:
+
+```bash
+uv run zenml down
+uv run zenml login --local
 ```
 
 ## Deployment
@@ -162,8 +202,8 @@ comments for why the CI identity deliberately can't do this itself):
 3. `terraform output -raw ci_deployer_key | base64 -d` for the service account's JSON key.
 4. Set these as GitHub Actions secrets: `GCP_PROJECT_ID`, `GCP_CREDENTIALS` (the key from step 3),
    `TF_STATE_BUCKET` (the bucket from step 1), `GEMINI_API_KEY`, `QDRANT_HOST`, `QDRANT_API_KEY`,
-   `APP_PASSWORD`, and (for tracing the deployed backend) `LANGSMITH_API_KEY`,
-   `LANGSMITH_TRACING`, `LANGSMITH_ENDPOINT`, `LANGSMITH_PROJECT` - the latter three fall back to
+   `APP_PASSWORD`, and (for tracing the deployed backend) `LANGFUSE_PUBLIC_KEY`,
+   `LANGFUSE_SECRET_KEY`, `LANGFUSE_TRACING`, `LANGFUSE_BASE_URL` - the latter two fall back to
    sensible defaults in `terraform/variables.tf` if left unset.
 
 Without step 4's `TF_STATE_BUCKET` secret, `terraform init` in the deploy workflow fails

@@ -7,6 +7,7 @@ in the future to include other dependencies as needed.
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from langchain_core.language_models import BaseChatModel
+from langchain_core.callbacks import BaseCallbackHandler
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from src.config import get_settings
@@ -25,7 +26,10 @@ def verify_password(password: str | None = Depends(_password_header)) -> None:
 
 
 def build_chat_agent(
-    checkpointer: BaseCheckpointSaver, model: BaseChatModel, judge: AnswerJudge
+    checkpointer: BaseCheckpointSaver,
+    model: BaseChatModel,
+    judge: AnswerJudge,
+    tracing_handler: BaseCallbackHandler | None = None,
 ) -> ChatAgent:
     """Build the chat agent once at startup, so it shares the same checkpointer and models
     across requests."""
@@ -35,4 +39,5 @@ def build_chat_agent(
         system_prompt=CHAT_SYSTEM_PROMPT,
         checkpointer=checkpointer,
         judge=judge,
+        tracing_handler=tracing_handler,
     )

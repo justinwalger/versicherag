@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from google import genai
+from langfuse.langchain import CallbackHandler
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -20,6 +21,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # for production use (probably overkill)
 
     settings = get_settings()
+    tracing_handler = None
+    if settings.langfuse_tracing:
+        if not settings.langfuse_public_key or not settings.langfuse_secret_key:
+            raise RuntimeError(
+                "LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are required when "
+                "LANGFUSE_TRACING is enabled."
+            )
+        tracing_handler = CallbackHandler()
     checkpointer = InMemorySaver()
     chat_model = ChatGoogleGenerativeAI(
         model=settings.gemini_chat_model, api_key=settings.gemini_api_key
@@ -29,7 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         model_name=settings.gemini_judge_model,
     )
 
-    app.state.agent = build_chat_agent(checkpointer=checkpointer, model=chat_model, judge=judge)
+    app.state.agent = build_chat_agent(
+        checkpointer=checkpointer,
+        model=chat_model,
+        judge=judge,
+        tracing_handler=tracing_handler,
+    )
     yield
 
 

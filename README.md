@@ -159,6 +159,23 @@ pipeline in a second terminal. Check the connection with:
 uv run zenml status
 ```
 
+### Langfuse project settings
+
+Langfuse projects are selected through the API keys, not through a separate project
+environment variable. In the Langfuse dashboard, create or select the project you
+want to use (for example, `versicherag`), then create API keys from that project's
+**Settings → API Keys** page. Put those keys in `.env`:
+
+```env
+LANGFUSE_TRACING=true
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+```
+
+Do not commit `.env` or share `LANGFUSE_SECRET_KEY`. If keys were exposed, revoke
+them in Langfuse and create a new pair.
+
 If a stale or broken local server is already configured, restart it with:
 
 ```bash
